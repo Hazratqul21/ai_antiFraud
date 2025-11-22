@@ -1,0 +1,41 @@
+Backend xatoliklari:
+1. Print bayonotlari (logging o'rniga)
+backend/ml_engine.py: Model yuklanishda print ishlatilgan
+backend/train_advanced_model.py: Ko'plab print bayonotlari (60+ joyda)
+backend/websocket_manager.py: WebSocket ulanishda print
+backend/auth/password.py: Parol tekshirishda print
+backend/generate_simulation_data.py: Simulyatsiya jarayonida print
+backend/services/ katalogidagi fayllar: Email, Telegram, ML xizmatlarida print
+backend/init_user.py: Foydalanuvchi yaratishda print
+backend/hash_password.py: Parol hash qilishda print
+Test fayllarida (test_api.py, test_dashboard.py): Print bayonotlari
+2. Model va schema nomuvofiqliklari
+backend/routes/transactions.py: _update_transaction_status funksiyasida "ALLOW" status ishlatilgan, lekin models.py da TransactionStatus.APPROVED mavjud
+backend/schemas.py: TransactionResponse.status string sifatida aniqlangan, lekin enum ishlatish kerak
+3. Import muammolari
+backend/ml_engine.py: torch import qilingan lekin ishlatilmagan
+backend/requirements.txt: fastapi-mail yo'q, lekin email_service.py da ishlatilgan
+4. Xavfsizlik muammolari
+backend/init_user.py: Parollar kodda ochiq holda yozilgan ("Xazrat571", "Xazrat_ali571")
+backend/hash_password.py: Parollar konsolga chiqarilgan
+Input validation yo'q ba'zi endpointlarda
+5. Ma'lumotlar bazasi
+backend/database.py: SQLite ishlatilgan, production uchun PostgreSQL kerak
+Model munosabatlari murakkab, ba'zi foreign key lar tekshirilmagan
+Frontend xatoliklari:
+1. Console.log bayonotlari
+frontend/src/hooks/useWebSocket.js: WebSocket ulanishda console.log ishlatilgan (4 joyda)
+2. Package.json
+frontend/package.json: fastapi-mail backend uchun, frontend da emas
+Umumiy muammolar:
+1. Logging tizimi yo'q
+Barcha print bayonotlari professional logging bilan almashtirilishi kerak
+2. Testlar
+Test fayllarida faqat asosiy tekshirish, to'liq integration testlar yo'q
+3. Dokumentatsiya
+API endpointlar uchun to'liq OpenAPI docs mavjud, lekin ba'zi parametrlar hujjatlashmagan
+4. Konfiguratsiya
+Environment variables ishlatilmagan, kodda hardcoded qiymatlar
+5. Performance
+ML model har safar yuklanadi, cache yo'q
+Loyiha umumiy holda ishlaydi, lekin production uchun yuqoridagi muammolar tuzatilishi kerak.

@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+scikit-learn
+pandas
+numpy
+python-multipart
+python-jose[cryptography]
+passlib[bcrypt]
+xgboost
+lightgbm
+torch
+imbalanced-learn
+joblib
