@@ -1,24 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { motion } from 'framer-motion';
+import PropTypes from 'prop-types';
+import UzbekistanMap from './UzbekistanMap';
+import CounterAnimation from './animations/CounterAnimation';
+import ThreatPulse from './animations/ThreatPulse';
+import ScanLine from './animations/ScanLine';
 
 export default function Dashboard({ stats, transactions = [], onAction, actionLoadingId }) {
     const [filter, setFilter] = useState('all');
+    const [error, setError] = useState(null);
 
-    if (!stats) return null;
+    // ✅ FIX: Proper error handling and validation
+    if (!stats || typeof stats !== 'object') {
+        return (
+            <div className="flex items-center justify-center h-screen bg-slate-950">
+                <div className="text-center">
+                    <div className="animate-spin text-4xl mb-4">⚙️</div>
+                    <p className="text-gray-400">Loading dashboard data...</p>
+                </div>
+            </div>
+        );
+    }
 
-    const totalTransactions = stats.total_transactions || 0;
-    const approvedShare = totalTransactions ? stats.approved_transactions / totalTransactions : 0;
-    const blockedShare = totalTransactions ? stats.blocked_transactions / totalTransactions : 0;
-    const reviewShare = totalTransactions ? stats.challenged_transactions / totalTransactions : 0;
-    const pendingShare = totalTransactions ? stats.pending_transactions / totalTransactions : 0;
+    // ✅ FIX: Safe numeric calculations
+    const totalTransactions = Math.max(stats.total_transactions || 0, 0);
+    const approvedTransactions = Math.max(stats.approved_transactions || 0, 0);
+    const blockedTransactions = Math.max(stats.blocked_transactions || 0, 0);
+    const challengedTransactions = Math.max(stats.challenged_transactions || 0, 0);
+    const pendingTransactions = Math.max(stats.pending_transactions || 0, 0);
+
+    const approvedShare = totalTransactions > 0 ? approvedTransactions / totalTransactions : 0;
+    const blockedShare = totalTransactions > 0 ? blockedTransactions / totalTransactions : 0;
+    const reviewShare = totalTransactions > 0 ? challengedTransactions / totalTransactions : 0;
+    const pendingShare = totalTransactions > 0 ? pendingTransactions / totalTransactions : 0;
 
     const approvalRate = (approvedShare * 100).toFixed(1);
     const blockedRate = (blockedShare * 100).toFixed(1);
     const reviewRate = (reviewShare * 100).toFixed(1);
 
-    const statCards = [
+    // ✅ FIX 3: useMemo to optimize re-renders and correct card values
+    const statCards = useMemo(() => [
         {
             label: 'TOTAL TRANSACTIONS',
-            value: stats.total_transactions.toLocaleString(),
+            value: totalTransactions,
+            renderValue: (val) => val.toLocaleString(),
             trend: '↗ 12.5% from yesterday',
             trendUp: true,
             icon: '📊',
@@ -26,7 +51,8 @@ export default function Dashboard({ stats, transactions = [], onAction, actionLo
         },
         {
             label: 'BLOCKED TRANSACTIONS',
-            value: stats.blocked_transactions.toLocaleString(),
+            value: blockedTransactions,
+            renderValue: (val) => val.toLocaleString(),
             trend: '↘ 3.2% from yesterday',
             trendUp: false,
             icon: '🚫',
@@ -34,7 +60,8 @@ export default function Dashboard({ stats, transactions = [], onAction, actionLo
         },
         {
             label: 'UNDER REVIEW',
-            value: stats.challenged_transactions.toLocaleString(),
+            value: challengedTransactions,
+            renderValue: (val) => val.toLocaleString(),
             trend: '↗ 5.8% from yesterday',
             trendUp: true,
             icon: '⏱️',
@@ -42,7 +69,8 @@ export default function Dashboard({ stats, transactions = [], onAction, actionLo
         },
         {
             label: 'FRAUD RATE',
-            value: `${blockedRate}%`,
+            value: parseFloat(blockedRate),
+            renderValue: (val) => `${val}%`,
             trend: '↘ 0.15% from yesterday',
             trendUp: blockedShare < 0.05,
             icon: '📈',
@@ -50,38 +78,71 @@ export default function Dashboard({ stats, transactions = [], onAction, actionLo
         },
         {
             label: 'APPROVAL RATE',
-            value: `${approvalRate}%`,
+            value: parseFloat(approvalRate),
+            renderValue: (val) => `${val}%`,
             trend: '↗ Dynamic from live data',
             trendUp: true,
             icon: '🛡️',
             gradient: 'from-emerald-500 to-green-500'
         },
-    ];
+    ], [totalTransactions, blockedTransactions, challengedTransactions, blockedRate, approvalRate]);
 
-    const timeAgo = (timestamp) => {
-        const seconds = Math.floor((new Date() - new Date(timestamp)) / 1000);
-        if (seconds < 60) return `${seconds}s ago`;
-        if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-        return `${Math.floor(seconds / 3600)}h ago`;
-    };
+    // ✅ FIX 4: Improved timeAgo with error handling
+    const timeAgo = useCallback((timestamp) => {
+        try {
+            if (!timestamp) return 'Recently';
+            const date = new Date(timestamp);
+            
+            // Timestamp validation
+            if (isNaN(date.getTime())) {
+                console.warn('Invalid timestamp:', timestamp);
+                return 'Recently';
+            }
 
-    const getStatusBadge = (status) => {
+            const now = new Date();
+            const seconds = Math.floor((now - date) / 1000);
+
+            if (seconds < 0) return 'Just now';
+            if (seconds < 60) return `${seconds}s ago`;
+            if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+            if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+            if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+            
+            return date.toLocaleDateString();
+        } catch (err) {
+            console.error('Error in timeAgo:', err);
+            return 'Recently';
+        }
+    }, []);
+
+    const getStatusBadge = useCallback((status) => {
         const configs = {
             'ALLOW': { class: 'bg-green-500/20 text-green-400 border-green-500/50', icon: '✓', label: 'APPROVED' },
             'CHALLENGE': { class: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50', icon: '⏱', label: 'REVIEW' },
             'BLOCK': { class: 'bg-red-500/20 text-red-400 border-red-500/50', icon: '✕', label: 'BLOCKED' }
         };
-        return configs[status] || configs['ALLOW'];
-    };
+        
+        const config = configs[status];
+        if (!config) {
+            console.warn(`Unknown transaction status: ${status}`);
+            return { class: 'bg-gray-500/20 text-gray-400 border-gray-500/50', icon: '?', label: 'UNKNOWN' };
+        }
+        return config;
+    }, []);
 
-    const filteredTransactions = filter === 'all'
-        ? transactions
-        : transactions.filter(tx => {
+    const filteredTransactions = useMemo(() => {
+        const validTransactions = transactions.filter(tx => 
+            tx && tx.id && tx.status && tx.amount !== undefined
+        );
+
+        if (filter === 'all') return validTransactions;
+        return validTransactions.filter(tx => {
             if (filter === 'approved') return tx.status === 'ALLOW';
             if (filter === 'blocked') return tx.status === 'BLOCK';
             if (filter === 'review') return tx.status === 'CHALLENGE';
             return true;
         });
+    }, [transactions, filter]);
 
     const donutSegments = [
         { label: 'Approved', value: approvedShare, color: '#10b981', gradient: 'linear-gradient(135deg, #10b981, #059669)' },
@@ -90,9 +151,9 @@ export default function Dashboard({ stats, transactions = [], onAction, actionLo
         { label: 'Pending', value: pendingShare, color: '#6b7280', gradient: 'linear-gradient(135deg, #6b7280, #4b5563)' }
     ];
 
-    const approvedDeg = approvedShare * 360;
-    const reviewDeg = reviewShare * 360;
-    const blockedDeg = blockedShare * 360;
+    const approvedDeg = Math.round(approvedShare * 360);
+    const reviewDeg = Math.round(reviewShare * 360);
+    const blockedDeg = Math.round(blockedShare * 360);
     const donutStyle = {
         background: `conic-gradient(
             #10b981 0deg ${approvedDeg}deg,
@@ -109,27 +170,29 @@ export default function Dashboard({ stats, transactions = [], onAction, actionLo
 
         if (tx.status !== 'ALLOW') {
             buttons.push(
-                <button
+                <motion.button
                     key="approve"
+                    whileHover={{ scale: 1.05 }}
                     onClick={() => onAction(tx.id, 'approve')}
                     disabled={isLoading}
-                    className="px-3 py-1 text-xs rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 disabled:opacity-50"
+                    className="px-3 py-1 text-xs rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 disabled:opacity-50 transition"
                 >
-                    {isLoading ? '...' : 'Approve'}
-                </button>
+                    {isLoading ? '⏳' : '✓ Approve'}
+                </motion.button>
             );
         }
 
         if (tx.status === 'BLOCK') {
             buttons.push(
-                <button
+                <motion.button
                     key="unblock"
+                    whileHover={{ scale: 1.05 }}
                     onClick={() => onAction(tx.id, 'unblock')}
                     disabled={isLoading}
-                    className="px-3 py-1 text-xs rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 hover:bg-indigo-500/30 disabled:opacity-50"
+                    className="px-3 py-1 text-xs rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 hover:bg-indigo-500/30 disabled:opacity-50 transition"
                 >
-                    {isLoading ? '...' : 'Unblock'}
-                </button>
+                    {isLoading ? '⏳' : '↻ Unblock'}
+                </motion.button>
             );
         }
 
@@ -142,41 +205,70 @@ export default function Dashboard({ stats, transactions = [], onAction, actionLo
 
     return (
         <div className="space-y-6">
-            {/* Stat Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                {statCards.map((card, index) => (
-                    <div
-                        key={index}
-                        className="bg-[#1a1f3a] rounded-2xl p-6 border border-white/5 relative overflow-hidden group hover:border-white/10 transition-all duration-300"
-                    >
-                        <div
-                            className="absolute top-0 left-0 right-0 h-1"
-                            style={{ background: `linear-gradient(to right, ${card.gradient.replace('from-', '').replace(' to-', ', ')})` }}
-                        />
-
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="text-xs text-gray-400 font-semibold tracking-wider">
-                                {card.label}
+            {/* Map Section */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+            >
+                <div className="lg:col-span-2">
+                    <UzbekistanMap />
+                </div>
+                <div className="space-y-4">
+                    {/* Stat Cards */}
+                    {statCards.slice(0, 3).map((card, index) => (
+                        <motion.div
+                            key={card.label}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className="glass-card rounded-xl p-4 relative overflow-hidden group hover-lift"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="text-xs text-slate-400 font-semibold tracking-wider">{card.label}</div>
+                                <div className="text-xl">{card.icon}</div>
                             </div>
-                            <div className="text-2xl">{card.icon}</div>
-                        </div>
+                            <div className="text-2xl font-bold text-white mono mb-1">
+                                {card.renderValue(card.value)}
+                            </div>
+                            <div className={`text-xs font-medium ${card.trendUp ? 'text-emerald-400' : 'text-red-400'}`}>
+                                {card.trend}
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </motion.div>
 
-                        <div className="text-3xl font-bold text-white mono mb-2">
-                            {card.value}
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                {statCards.slice(3).map((card, index) => (
+                    <motion.div
+                        key={card.label}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: (index + 3) * 0.05 }}
+                        className="glass-card rounded-xl p-4 hover-lift press-scale"
+                    >
+                        <div className="flex justify-between items-start mb-2">
+                            <div className="text-xs text-slate-400 font-semibold tracking-wider">{card.label}</div>
+                            <div className="text-lg">{card.icon}</div>
                         </div>
-
-                        <div className={`text-xs font-medium ${card.trendUp ? 'text-green-400' : 'text-red-400'}`}>
+                        <div className="text-xl font-bold text-white mono">{card.renderValue(card.value)}</div>
+                        <div className={`text-xs font-medium mt-1 ${card.trendUp ? 'text-emerald-400' : 'text-red-400'}`}>
                             {card.trend}
                         </div>
-                    </div>
+                    </motion.div>
                 ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Live Activity */}
-                <div className="bg-[#1a1f3a] rounded-2xl p-6 border border-white/5">
+                <div className="glass-card-elevated rounded-2xl p-6 relative overflow-hidden">
+                    <ScanLine color="purple" speed={4} />
                     <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                        <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                        <ThreatPulse level="safe" size="md" />
                         Live Activity
                     </h2>
 
@@ -184,9 +276,12 @@ export default function Dashboard({ stats, transactions = [], onAction, actionLo
                         {transactions.slice(0, 5).map((tx, index) => {
                             const statusConfig = getStatusBadge(tx.status);
                             return (
-                                <div
+                                <motion.div
                                     key={tx.id}
-                                    className="p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all cursor-pointer"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.05 }}
+                                    className="p-3 rounded-xl glass-card hover-lift cursor-pointer"
                                 >
                                     <div className="flex justify-between items-center mb-2">
                                         <div className="mono font-bold text-white">${tx.amount.toLocaleString()}</div>
@@ -198,14 +293,14 @@ export default function Dashboard({ stats, transactions = [], onAction, actionLo
                                     <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold border ${statusConfig.class}`}>
                                         {statusConfig.icon} {statusConfig.label}
                                     </span>
-                                </div>
+                                </motion.div>
                             );
                         })}
                     </div>
                 </div>
 
                 {/* Recent Transactions */}
-                <div className="lg:col-span-2 bg-[#1a1f3a] rounded-2xl p-6 border border-white/5">
+                <div className="lg:col-span-2 glass-card-elevated rounded-2xl p-6">
                     <h2 className="text-lg font-bold text-white mb-4">Recent Transactions</h2>
 
                     <div className="flex gap-2 mb-4">
@@ -213,9 +308,9 @@ export default function Dashboard({ stats, transactions = [], onAction, actionLo
                             <button
                                 key={f}
                                 onClick={() => setFilter(f)}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === f
-                                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                                        : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all press-scale ${filter === f
+                                    ? 'gradient-purple-pink text-white shadow-lg shadow-purple-500/30'
+                                    : 'glass-card text-gray-400 hover-lift'
                                     }`}
                             >
                                 {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -319,3 +414,34 @@ export default function Dashboard({ stats, transactions = [], onAction, actionLo
         </div>
     );
 }
+
+// ✅ PropTypes validation
+Dashboard.propTypes = {
+    stats: PropTypes.shape({
+        total_transactions: PropTypes.number,
+        blocked_transactions: PropTypes.number,
+        challenged_transactions: PropTypes.number,
+        pending_transactions: PropTypes.number,
+        approved_transactions: PropTypes.number,
+    }),
+    transactions: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.string,
+        amount: PropTypes.number,
+        user_id: PropTypes.string,
+        merchant: PropTypes.string,
+        status: PropTypes.oneOf(['ALLOW', 'CHALLENGE', 'BLOCK', 'PENDING', 'APPROVED', 'REJECTED', 'BLOCKED']),
+        risk_score: PropTypes.shape({
+            score: PropTypes.number
+        }),
+        timestamp: PropTypes.string,
+    })),
+    onAction: PropTypes.func,
+    actionLoadingId: PropTypes.string
+};
+
+Dashboard.defaultProps = {
+    stats: null,
+    transactions: [],
+    onAction: null,
+    actionLoadingId: null
+};

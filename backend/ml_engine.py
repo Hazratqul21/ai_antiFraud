@@ -6,6 +6,9 @@ import joblib
 import numpy as np
 import os
 from typing import Dict
+import logging
+
+logger = logging.getLogger(__name__)
 
 class MLEngine:
     def __init__(self):
@@ -24,9 +27,11 @@ class MLEngine:
             
             self.models_loaded = True
             self.use_ensemble = True
-            print("✓ Ensemble models loaded successfully!")
+            self.models_loaded = True
+            self.use_ensemble = True
+            logger.info("✓ Ensemble models loaded successfully!")
         except Exception as e:
-            print(f"⚠ Ensemble models not found, using rule-based fallback: {e}")
+            logger.warning(f"⚠ Ensemble models not found, using rule-based fallback: {e}")
             self.use_ensemble = False
 
     def extract_features(self, transaction_data: dict) -> np.ndarray:

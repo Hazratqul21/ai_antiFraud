@@ -24,7 +24,7 @@ export function useWebSocket(url, options = {}) {
             const ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
-                console.log('✅ WebSocket connected');
+                // console.log('✅ WebSocket connected');
                 setIsConnected(true);
                 setReconnectAttempts(0);
                 if (onConnect) onConnect();
@@ -54,14 +54,14 @@ export function useWebSocket(url, options = {}) {
             };
 
             ws.onclose = () => {
-                console.log('🔌 WebSocket disconnected');
+                // console.log('🔌 WebSocket disconnected');
                 setIsConnected(false);
                 if (ws.pingInterval) clearInterval(ws.pingInterval);
                 if (onDisconnect) onDisconnect();
 
                 // Attempt reconnection
                 if (reconnectAttempts < maxReconnectAttempts) {
-                    console.log(`Reconnecting... Attempt ${reconnectAttempts + 1}/${maxReconnectAttempts}`);
+                    // console.log(`Reconnecting... Attempt ${reconnectAttempts + 1}/${maxReconnectAttempts}`);
                     reconnectTimeoutRef.current = setTimeout(() => {
                         setReconnectAttempts(prev => prev + 1);
                         connect();

@@ -7,6 +7,11 @@ from sqlalchemy.orm import Session
 from database import SessionLocal, engine
 import models
 import ml_engine
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 TOTAL_TRANSACTIONS = 300_000
 BATCH_SIZE = 5_000
@@ -17,12 +22,22 @@ models.Base.metadata.create_all(bind=engine)
 
 # Realistic data pools
 MERCHANTS = [
-    "Korzinka.uz", "Texnomart", "Shopify", "Walmart", "Target", "Best Buy", "Apple Store",
-    "Google Play", "Steam", "Netflix", "Spotify", "Uber", "Lyft", "Airbnb",
-    "Booking.com", "Expedia", "Starbucks", "McDonald's", "Subway", "Domino's",
-    "Nike", "Adidas", "Zara", "H&M", "Macy's", "Nordstrom", "Costco", "Home Depot",
-    "Lowe's", "Petco", "Chewy", "Wayfair", "Etsy", "Alibaba", "AliExpress",
-    "SuperStore", "TechMart", "GameStop", "Office Depot", "Staples"
+    # Retail & Supermarkets
+    "Korzinka.uz", "Makro", "Havas", "Baraka Market", "Safia Market",
+    # Tech & Electronics
+    "Texnomart", "MediaPark", "Artel Plaza", "Samsung Store", "ASUS Store",
+    # E-commerce
+    "Uzum Market", "Uzum Tezkor", "Oli.uz", "Asaxiy.uz", "Mediasat.uz",
+    # Food & Restaurants
+    "Evos", "Oqtepa Lavash", "Bellissimo", "Chicken House", "KFC Uzbekistan",
+    # Payment & Financial
+    "Payme", "Click", "Uzcard", "Humo", "Apelsin",
+    # Transportation & Delivery
+    "Yandex Go", "Yandex Taxi", "Express24", "Sello", "Uzum Nasiya",
+    # Fashion & Clothing
+    "LC Waikiki", "DeFacto", "Colin's", "Marks & Spencer", "Zara Tashkent",
+    # Services
+    "UzbekTelecom", "Beeline", "Ucell", "Uztelecom Internet", "Aloqa Bank"
 ]
 
 LOCATIONS = [
@@ -32,18 +47,18 @@ LOCATIONS = [
 ]
 
 FIRST_NAMES = [
-    "James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda",
-    "William", "Elizabeth", "David", "Barbara", "Richard", "Susan", "Joseph", "Jessica",
-    "Thomas", "Sarah", "Charles", "Karen", "Christopher", "Nancy", "Daniel", "Lisa",
-    "Matthew", "Betty", "Anthony", "Margaret", "Mark", "Sandra", "Donald", "Ashley",
-    "Steven", "Kimberly", "Paul", "Emily", "Andrew", "Donna", "Joshua", "Michelle"
+    "Alisher", "Malika", "Shohru​x", "Nodira", "Sardor", "Dil​noza", "Hazratqul", "Aziza",
+    "Otabek", "Nigora", "Eldor", "Madina", "Bekzod", "Feruza", "Timur", "Gulnora",
+    "Rustam", "Kamila", "Davron", "Zilola", "Farxod", "Diyora", "Jamshid", "Sevara",
+    "Akmal", "Nargiza", "Baxtiyor", "Laylo", "Sanjar", "Zulfiya", "Ulugbek", "Dilfuza",
+    "Anvar", "Shoira", "Islom", "Munira", "Jahongir", "Marjona", "Farhod", "Shahnoza"
 ]
 
 LAST_NAMES = [
-    "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
-    "Rodriguez", "Martinez", "Hernandez", "Lopez", "Wilson", "Anderson", "Thomas", "Taylor",
-    "Moore", "Jackson", "Martin", "Lee", "Thompson", "White", "Harris", "Sanchez",
-    "Clark", "Ramirez", "Lewis", "Robinson", "Walker", "Young", "Allen", "King"
+    "Karimov", "Rahimov", "Azimov", "Ismoilov", "Yuldashev", "Toshmatov", "Ahmadov", "Saidov",
+    "Aliyev", "Mamadov", "Ibragimov", "Hasanov", "Normatov", "Sodiqov", "Baxromov", "Shukurov",
+    "Asqarov", "Qosimov", "Hamidov", "Nurmatov", "Rajabov", "Salimov", "Umarov", "Ergashev",
+    "Xolmatov", "Jabbarov", "Valijonov", "Komilov", "Sultonov", "Musayev", "Haydarov", "Tursunov"
 ]
 
 def generate_ip():
@@ -179,8 +194,8 @@ def create_transaction_batch(db: Session, batch_size=1000):
     return len(transactions)
 
 def main():
-    print("🚀 Starting simulation data generation...")
-    print(f"📊 Generating {TOTAL_TRANSACTIONS:,} transactions...")
+    logger.info("🚀 Starting simulation data generation...")
+    logger.info(f"📊 Generating {TOTAL_TRANSACTIONS:,} transactions...")
     
     db = SessionLocal()
     total_created = 0
@@ -197,7 +212,7 @@ def main():
             total_created += created
             
             if batch_num % progress_interval == 0 or batch_num == total_batches:
-                print(f"✅ Progress: {batch_num}/{total_batches} batches ({total_created:,} transactions created)")
+                logger.info(f"✅ Progress: {batch_num}/{total_batches} batches ({total_created:,} transactions created)")
         
         # Get final statistics
         total = db.query(models.Transaction).count()
@@ -206,20 +221,20 @@ def main():
         allowed = db.query(models.Transaction).filter(models.Transaction.status == "ALLOW").count()
         pending = db.query(models.Transaction).filter(models.Transaction.status == "PENDING").count()
         
-        print("\n" + "="*60)
-        print("✅ Simulation Complete!")
-        print("="*60)
-        print(f"📈 Total Transactions: {total:,}")
-        print(f"🚫 Blocked: {blocked:,} ({blocked/total*100:.2f}%)")
-        print(f"⚠️  Under Review: {challenged:,} ({challenged/total*100:.2f}%)")
-        print(f"✅ Approved: {allowed:,} ({allowed/total*100:.2f}%)")
+        logger.info("\n" + "="*60)
+        logger.info("✅ Simulation Complete!")
+        logger.info("="*60)
+        logger.info(f"📈 Total Transactions: {total:,}")
+        logger.info(f"🚫 Blocked: {blocked:,} ({blocked/total*100:.2f}%)")
+        logger.info(f"⚠️  Under Review: {challenged:,} ({challenged/total*100:.2f}%)")
+        logger.info(f"✅ Approved: {allowed:,} ({allowed/total*100:.2f}%)")
         if pending:
-            print(f"🕒 Pending: {pending:,} ({pending/total*100:.2f}%)")
-        print(f"📊 Fraud Rate: {blocked/total*100:.2f}%")
-        print("="*60)
+            logger.info(f"🕒 Pending: {pending:,} ({pending/total*100:.2f}%)")
+        logger.info(f"📊 Fraud Rate: {blocked/total*100:.2f}%")
+        logger.info("="*60)
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        logger.error(f"❌ Error: {e}")
         db.rollback()
     finally:
         db.close()

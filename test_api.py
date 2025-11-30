@@ -1,5 +1,10 @@
 import urllib.request
+import urllib.request
 import json
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 url = "http://127.0.0.1:8000/transactions/"
 data = {
@@ -21,7 +26,7 @@ req.add_header('Content-Length', len(jsondataasbytes))
 
 try:
     response = urllib.request.urlopen(req, jsondataasbytes)
-    print(f"Status Code: {response.getcode()}")
-    print(f"Response: {response.read().decode('utf-8')}")
+    logger.info(f"Status Code: {response.getcode()}")
+    logger.info(f"Response: {response.read().decode('utf-8')}")
 except Exception as e:
-    print(f"Error: {e}")
+    logger.error(f"Error: {e}")

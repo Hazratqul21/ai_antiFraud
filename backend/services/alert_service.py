@@ -41,3 +41,6 @@ def update_alert_status(db: Session, alert_id: int, status: str, analyst: str | 
     db.refresh(alert)
     return alert
 
+
+
+

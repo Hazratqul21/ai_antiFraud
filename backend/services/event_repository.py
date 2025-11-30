@@ -100,3 +100,6 @@ def get_metrics(db: Session, days: int = 7):
     )
     return metrics
 
+
+
+

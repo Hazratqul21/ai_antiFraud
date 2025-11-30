@@ -2,6 +2,9 @@
 Authentication utilities for password hashing and verification
 """
 import bcrypt
+import logging
+
+logger = logging.getLogger(__name__)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""
@@ -11,7 +14,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
             hashed_password.encode('utf-8')
         )
     except Exception as e:
-        print(f"Password verification error: {e}")
+        logger.error(f"Password verification error: {e}")
         return False
 
 def get_password_hash(password: str) -> str:
@@ -23,6 +26,6 @@ def get_password_hash(password: str) -> str:
         )
         return hashed.decode('utf-8')
     except Exception as e:
-        print(f"Password hashing error: {e}")
+        logger.error(f"Password hashing error: {e}")
         raise
 

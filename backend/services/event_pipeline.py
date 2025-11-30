@@ -51,3 +51,6 @@ def persist_automated_action(db: Session, ingested_event_id: int, transaction_id
         db.add(action)
         db.commit()
 
+
+
+

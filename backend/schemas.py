@@ -24,12 +24,14 @@ class TransactionBase(BaseModel):
 class TransactionCreate(TransactionBase):
     pass
 
+from models import TransactionStatus
+
 class TransactionResponse(TransactionBase):
     id: int
-    status: str
+    status: TransactionStatus
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class RiskScoreResponse(BaseModel):
     score: float
@@ -37,7 +39,7 @@ class RiskScoreResponse(BaseModel):
     reason: str
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class TransactionWithRisk(TransactionResponse):
     risk_score: Optional[RiskScoreResponse] = None

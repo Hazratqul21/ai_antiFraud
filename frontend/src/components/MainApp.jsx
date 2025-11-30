@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from './Sidebar';
-import Header from './Header';
+import MainLayout from './MainLayout';
 import Dashboard from './Dashboard';
 import Analytics from './Analytics';
 import Transactions from './Transactions';
@@ -10,6 +9,7 @@ import EventAnalysis from './EventAnalysis';
 import Monitoring from './Monitoring';
 import Investigation from './Investigation';
 import WebTraffic from './WebTraffic';
+import Settings from './Settings';
 
 export default function MainApp() {
     const [stats, setStats] = useState(null);
@@ -89,33 +89,26 @@ export default function MainApp() {
     }
 
     return (
-        <div className="min-h-screen flex bg-[#0a0f1e]">
-            <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-
-            <div className="flex-1 flex flex-col">
-                <Header lastUpdate={lastUpdate} stats={stats} alertsCount={alerts.length} />
-
-                <main className="flex-1 p-6 overflow-y-auto">
-                    {activeTab === 'dashboard' && (
-                        <Dashboard
-                            stats={stats}
-                            transactions={transactions}
-                            onAction={handleTransactionAction}
-                            actionLoadingId={actionLoadingId}
-                        />
-                    )}
-                    {activeTab === 'analytics' && <Analytics />}
-                    {activeTab === 'event-analysis' && <EventAnalysis />}
-                    {activeTab === 'investigation' && <Investigation />}
-                    {activeTab === 'web-traffic' && <WebTraffic />}
-                    {activeTab === 'monitoring' && <Monitoring />}
-                    {activeTab === 'transactions' && <Transactions />}
-                    {activeTab === 'reports' && <Reports />}
-                    {activeTab === 'alerts' && (
-                        <AlertsView alerts={alerts} onResolve={handleResolveAlert} />
-                    )}
-                </main>
-            </div>
-        </div>
+        <MainLayout activeTab={activeTab} setActiveTab={setActiveTab}>
+            {activeTab === 'dashboard' && (
+                <Dashboard
+                    stats={stats}
+                    transactions={transactions}
+                    onAction={handleTransactionAction}
+                    actionLoadingId={actionLoadingId}
+                />
+            )}
+            {activeTab === 'analytics' && <Analytics />}
+            {activeTab === 'event-analysis' && <EventAnalysis />}
+            {activeTab === 'investigation' && <Investigation />}
+            {activeTab === 'web-traffic' && <WebTraffic />}
+            {activeTab === 'monitoring' && <Monitoring />}
+            {activeTab === 'transactions' && <Transactions />}
+            {activeTab === 'reports' && <Reports />}
+            {activeTab === 'alerts' && (
+                <AlertsView alerts={alerts} onResolve={handleResolveAlert} />
+            )}
+            {activeTab === 'settings' && <Settings />}
+        </MainLayout>
     );
 }

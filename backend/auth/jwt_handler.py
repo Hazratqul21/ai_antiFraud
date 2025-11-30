@@ -6,7 +6,12 @@ from typing import Optional
 from jose import JWTError, jwt
 
 # Secret key for JWT - in production, use environment variable
-SECRET_KEY = "your-secret-key-change-this-in-production-09823749287349872349"
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this-in-production-09823749287349872349")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 REFRESH_TOKEN_EXPIRE_DAYS = 7

@@ -12,7 +12,13 @@ from imblearn.over_sampling import SMOTE
 import xgboost as xgb
 import lightgbm as lgb
 import joblib
+import joblib
 import random
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 def generate_advanced_synthetic_data(n_samples=50000):
     """Generate more realistic synthetic fraud data with complex patterns"""
@@ -114,15 +120,16 @@ def generate_advanced_synthetic_data(n_samples=50000):
 
 def train_ensemble_model():
     """Train an ensemble of models for maximum accuracy"""
-    print("=" * 60)
-    print("ADVANCED FRAUD DETECTION ML PIPELINE")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("ADVANCED FRAUD DETECTION ML PIPELINE")
+    logger.info("=" * 60)
     
     # Generate data
-    print("\n[1/6] Generating advanced synthetic dataset...")
+    # Generate data
+    logger.info("\n[1/6] Generating advanced synthetic dataset...")
     df = generate_advanced_synthetic_data(50000)
-    print(f"   Dataset size: {len(df)}")
-    print(f"   Fraud rate: {df['is_fraud'].mean()*100:.2f}%")
+    logger.info(f"   Dataset size: {len(df)}")
+    logger.info(f"   Fraud rate: {df['is_fraud'].mean()*100:.2f}%")
     
     # Prepare features
     feature_cols = [col for col in df.columns if col != 'is_fraud']
@@ -135,20 +142,23 @@ def train_ensemble_model():
     )
     
     # Handle class imbalance with SMOTE
-    print("\n[2/6] Applying SMOTE for class balancing...")
+    # Handle class imbalance with SMOTE
+    logger.info("\n[2/6] Applying SMOTE for class balancing...")
     smote = SMOTE(random_state=42)
     X_train_balanced, y_train_balanced = smote.fit_resample(X_train, y_train)
-    print(f"   Original training size: {len(X_train)}")
-    print(f"   Balanced training size: {len(X_train_balanced)}")
+    logger.info(f"   Original training size: {len(X_train)}")
+    logger.info(f"   Balanced training size: {len(X_train_balanced)}")
     
     # Scale features
-    print("\n[3/6] Scaling features...")
+    # Scale features
+    logger.info("\n[3/6] Scaling features...")
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train_balanced)
     X_test_scaled = scaler.transform(X_test)
     
     # Train XGBoost
-    print("\n[4/6] Training XGBoost model...")
+    # Train XGBoost
+    logger.info("\n[4/6] Training XGBoost model...")
     xgb_model = xgb.XGBClassifier(
         n_estimators=200,
         max_depth=7,
@@ -163,7 +173,8 @@ def train_ensemble_model():
     xgb_proba = xgb_model.predict_proba(X_test_scaled)[:, 1]
     
     # Train LightGBM
-    print("\n[5/6] Training LightGBM model...")
+    # Train LightGBM
+    logger.info("\n[5/6] Training LightGBM model...")
     lgb_model = lgb.LGBMClassifier(
         n_estimators=200,
         max_depth=7,
@@ -177,7 +188,8 @@ def train_ensemble_model():
     lgb_proba = lgb_model.predict_proba(X_test_scaled)[:, 1]
     
     # Train Random Forest
-    print("\n[6/6] Training Random Forest model...")
+    # Train Random Forest
+    logger.info("\n[6/6] Training Random Forest model...")
     rf_model = RandomForestClassifier(
         n_estimators=200,
         max_depth=10,
@@ -188,33 +200,36 @@ def train_ensemble_model():
     rf_proba = rf_model.predict_proba(X_test_scaled)[:, 1]
     
     # Ensemble predictions (weighted average)
-    print("\n" + "=" * 60)
-    print("ENSEMBLE PREDICTION (Weighted Average)")
-    print("=" * 60)
+    # Ensemble predictions (weighted average)
+    logger.info("\n" + "=" * 60)
+    logger.info("ENSEMBLE PREDICTION (Weighted Average)")
+    logger.info("=" * 60)
     ensemble_proba = (0.4 * xgb_proba + 0.4 * lgb_proba + 0.2 * rf_proba)
     ensemble_pred = (ensemble_proba > 0.5).astype(int)
     
     # Evaluation
-    print("\n--- XGBoost Performance ---")
-    print(classification_report(y_test, xgb_pred))
-    print(f"ROC-AUC: {roc_auc_score(y_test, xgb_proba):.4f}")
+    # Evaluation
+    logger.info("\n--- XGBoost Performance ---")
+    logger.info(classification_report(y_test, xgb_pred))
+    logger.info(f"ROC-AUC: {roc_auc_score(y_test, xgb_proba):.4f}")
     
-    print("\n--- LightGBM Performance ---")
-    print(classification_report(y_test, lgb_pred))
-    print(f"ROC-AUC: {roc_auc_score(y_test, lgb_proba):.4f}")
+    logger.info("\n--- LightGBM Performance ---")
+    logger.info(classification_report(y_test, lgb_pred))
+    logger.info(f"ROC-AUC: {roc_auc_score(y_test, lgb_proba):.4f}")
     
-    print("\n--- Random Forest Performance ---")
-    print(classification_report(y_test, rf_pred))
-    print(f"ROC-AUC: {roc_auc_score(y_test, rf_proba):.4f}")
+    logger.info("\n--- Random Forest Performance ---")
+    logger.info(classification_report(y_test, rf_pred))
+    logger.info(f"ROC-AUC: {roc_auc_score(y_test, rf_proba):.4f}")
     
-    print("\n--- ENSEMBLE Performance ---")
-    print(classification_report(y_test, ensemble_pred))
-    print(f"ROC-AUC: {roc_auc_score(y_test, ensemble_proba):.4f}")
+    logger.info("\n--- ENSEMBLE Performance ---")
+    logger.info(classification_report(y_test, ensemble_pred))
+    logger.info(f"ROC-AUC: {roc_auc_score(y_test, ensemble_proba):.4f}")
     
     # Save models
-    print("\n" + "=" * 60)
-    print("SAVING MODELS")
-    print("=" * 60)
+    # Save models
+    logger.info("\n" + "=" * 60)
+    logger.info("SAVING MODELS")
+    logger.info("=" * 60)
     joblib.dump(xgb_model, "model_xgboost.pkl")
     joblib.dump(lgb_model, "model_lightgbm.pkl")
     joblib.dump(rf_model, "model_rf.pkl")
@@ -229,15 +244,15 @@ def train_ensemble_model():
     }
     joblib.dump(ensemble_config, "ensemble_config.pkl")
     
-    print("✓ Saved: model_xgboost.pkl")
-    print("✓ Saved: model_lightgbm.pkl")
-    print("✓ Saved: model_rf.pkl")
-    print("✓ Saved: scaler.pkl")
-    print("✓ Saved: feature_columns.pkl")
-    print("✓ Saved: ensemble_config.pkl")
-    print("\n" + "=" * 60)
-    print("TRAINING COMPLETE!")
-    print("=" * 60)
+    logger.info("✓ Saved: model_xgboost.pkl")
+    logger.info("✓ Saved: model_lightgbm.pkl")
+    logger.info("✓ Saved: model_rf.pkl")
+    logger.info("✓ Saved: scaler.pkl")
+    logger.info("✓ Saved: feature_columns.pkl")
+    logger.info("✓ Saved: ensemble_config.pkl")
+    logger.info("\n" + "=" * 60)
+    logger.info("TRAINING COMPLETE!")
+    logger.info("=" * 60)
 
 if __name__ == "__main__":
     train_ensemble_model()

@@ -1,0 +1,25 @@
+.codersinflow
+.vscode
+node_modules
+.env
+.venv
+.codex
+out
+dist
+*.vsix
+.claude
+CLAUDE.md
+.DS_Store
+.git
+*.log
+*.tmp
+__pycache__
+*.pyc
+.env.local
+.next
+.github
+
+# Local Netlify folder
+.netlify
+adapter_model.safetensors
+backend/sql_app.db

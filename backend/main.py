@@ -1,7 +1,26 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy.orm import Session
+import pandas as pd
+import io
+import os
+from dotenv import load_dotenv
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from limiter import limiter
+
+load_dotenv()
 import models, database
-from routes import transactions, dashboard, analytics, reports, ingestion, event_base, cockpit, event_analysis, monitoring, investigation, web_traffic, realtime, currency, auth, notifications, export as export_routes, ml
+from api_routes import transactions, dashboard, analytics, reports, ingestion, event_base, cockpit, event_analysis, monitoring, investigation, web_traffic, realtime, currency, auth, notifications, export as export_routes, ml
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 models.Base.metadata.create_all(bind=database.engine)
 
@@ -48,9 +67,12 @@ app = FastAPI(
     ]
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=os.getenv("ALLOWED_ORIGINS", "*").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

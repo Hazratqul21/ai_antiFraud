@@ -6,6 +6,9 @@ from typing import List, Dict
 from fastapi import WebSocket
 import json
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ConnectionManager:
     def __init__(self):
@@ -21,7 +24,7 @@ class ConnectionManager:
                 self.user_connections[user_id] = []
             self.user_connections[user_id].append(websocket)
         
-        print(f"✅ WebSocket connected. Total connections: {len(self.active_connections)}")
+        logger.info(f"✅ WebSocket connected. Total connections: {len(self.active_connections)}")
     
     def disconnect(self, websocket: WebSocket, user_id: str = None):
         if websocket in self.active_connections:
@@ -33,14 +36,14 @@ class ConnectionManager:
             if not self.user_connections[user_id]:
                 del self.user_connections[user_id]
         
-        print(f"❌ WebSocket disconnected. Total connections: {len(self.active_connections)}")
+        logger.info(f"❌ WebSocket disconnected. Total connections: {len(self.active_connections)}")
     
     async def send_personal_message(self, message: dict, websocket: WebSocket):
         """Send message to specific connection"""
         try:
             await websocket.send_text(json.dumps(message))
         except Exception as e:
-            print(f"Error sending personal message: {e}")
+            logger.error(f"Error sending personal message: {e}")
     
     async def broadcast(self, message: dict, event_type: str = "update"):
         """Broadcast message to all connected clients"""
@@ -52,7 +55,7 @@ class ConnectionManager:
                     "data": message
                 })
             except Exception as e:
-                print(f"Error broadcasting to client: {e}")
+                logger.error(f"Error broadcasting to client: {e}")
                 disconnected.append(connection)
         
         # Clean up disconnected clients
@@ -66,7 +69,7 @@ class ConnectionManager:
                 try:
                     await connection.send_text(json.dumps(message))
                 except Exception as e:
-                    print(f"Error sending to user {user_id}: {e}")
+                    logger.error(f"Error sending to user {user_id}: {e}")
     
     async def broadcast_transaction(self, transaction: dict):
         """Broadcast new transaction to all clients"""

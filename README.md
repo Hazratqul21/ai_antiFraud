@@ -6,7 +6,31 @@
 [![Real-time](https://img.shields.io/badge/Real--time-2s%20refresh-blue)](https://github.com)
 [![Tech Stack](https://img.shields.io/badge/Stack-FastAPI%20%7C%20React%20%7C%20ML-orange)](https://github.com)
 
-[English](#english) | [O'zbekcha](#uzbek)
+---
+
+## ⚡ QUICK LOGIN
+
+```
+🔐 Username: engineer
+🔐 Password: Xazrat571
+🎯 Role: ADMIN
+```
+
+**Start Application:**
+```bash
+# Terminal 1: Backend (port 8000)
+.venv/bin/python -m uvicorn backend.main:app --reload
+
+# Terminal 2: Frontend (port 5173)
+cd frontend && npm run dev
+```
+
+**Access URLs:**
+- Frontend: http://localhost:5173/login
+- Backend API: http://localhost:8000/docs
+- WebSocket: ws://localhost:8000/ws
+
+> 📖 **Detailed setup guide:** See [SETUP_AND_LOGIN.md](./SETUP_AND_LOGIN.md)
 
 ---
 

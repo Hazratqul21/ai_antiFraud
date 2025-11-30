@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import RiskScoreMeter from './animations/RiskScoreMeter';
+import ScanLine from './animations/ScanLine';
 
 export default function Monitoring() {
     const [performance, setPerformance] = useState(null);
@@ -62,15 +65,25 @@ export default function Monitoring() {
 
             {/* Model Performance Metrics */}
             {performance && (
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-6">
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="glass-card-elevated rounded-xl p-6 relative overflow-hidden"
+                >
+                    <ScanLine color="green" speed={5} />
                     <h3 className="text-xl font-semibold text-white mb-4">
                         🤖 ML Model Performance <span className="text-sm text-gray-400">(Last 7 Days)</span>
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+                        <motion.div 
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.1 }}
+                            className="glass-card rounded-lg p-4 hover-lift"
+                        >
                             <div className="text-purple-400 text-xs font-medium mb-1">Precision</div>
-                            <div className="text-3xl font-bold text-white">{(performance.precision * 100).toFixed(1)}%</div>
-                        </div>
+                            <div className="text-3xl font-bold text-white mono">{(performance.precision * 100).toFixed(1)}%</div>
+                        </motion.div>
                         <div className="bg-pink-500/10 border border-pink-500/30 rounded-lg p-4">
                             <div className="text-pink-400 text-xs font-medium mb-1">Recall</div>
                             <div className="text-3xl font-bold text-white">{(performance.recall * 100).toFixed(1)}%</div>
@@ -108,11 +121,11 @@ export default function Monitoring() {
                             <div className="text-2xl font-bold text-white">{performance.false_negatives}</div>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             )}
 
             {/* Rule Triggers */}
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden">
+            <div className="glass-card-elevated rounded-xl overflow-hidden">
                 <div className="p-4 border-b border-white/10">
                     <h3 className="text-xl font-semibold text-white">⚡ Rule Trigger Statistics</h3>
                 </div>

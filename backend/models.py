@@ -9,6 +9,8 @@ class TransactionStatus(str, enum.Enum):
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
     CHALLENGED = "CHALLENGED"
+    BLOCKED = "BLOCKED"
+    ALLOW = "ALLOW"
 
 class Transaction(Base):
     __tablename__ = "transactions"
@@ -16,15 +18,15 @@ class Transaction(Base):
     id = Column(Integer, primary_key=True, index=True)
     transaction_id = Column(String, unique=True, index=True)
     user_id = Column(String, index=True)
-    amount = Column(Float)
-    currency = Column(String, default="USD")
-    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    amount = Column(Float, nullable=False)
+    currency = Column(String, default="USD", nullable=False)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     merchant = Column(String)
     ip_address = Column(String)
     location = Column(String)
     device_id = Column(String)
     
-    status = Column(String, default=TransactionStatus.PENDING.value)
+    status = Column(String, default=TransactionStatus.PENDING.value, nullable=False)
     
     risk_score = relationship("RiskScore", back_populates="transaction", uselist=False)
     ingested_events = relationship("IngestedEvent", back_populates="transaction")
@@ -36,8 +38,8 @@ class RiskScore(Base):
     __tablename__ = "risk_scores"
 
     id = Column(Integer, primary_key=True, index=True)
-    transaction_id = Column(Integer, ForeignKey("transactions.id"))
-    score = Column(Float) # 0 to 1000
+    transaction_id = Column(Integer, ForeignKey("transactions.id"), nullable=False)
+    score = Column(Float, nullable=False) # 0 to 1000
     confidence = Column(Float) # 0.0 to 1.0
     reason = Column(String) # e.g., "High Amount", "ML Prediction"
     

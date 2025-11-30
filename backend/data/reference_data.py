@@ -53,3 +53,6 @@ def infer_segment_from_user(user_id: str) -> str:
         return "merchant"
     return "consumer"
 
+
+
+
